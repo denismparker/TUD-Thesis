@@ -1,6 +1,6 @@
-# TUD-Thesis
-A temporary repo to hold documentation
-##   Billing Management Console - AWS Bill.pdf                     # anonymised example Bill
+<h1> TUD-Thesis</h1>
+<h2> A temporoary repo to hold documentation.</h2>
+##   Billing Management Console - AWS Bill.pdf                     <h3>anonymised example AWS Bill</h3>
 ##   FinOps Maturity Assessment Survey - Google Forms.pdf          # Survet Questionnaire
 
 ##   PowerBI-Dashboard-29-10-2024.pbix                              # CUR Report with PowerBI analysis
