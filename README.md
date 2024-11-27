@@ -1,16 +1,16 @@
 # TUD-Thesis
 o    A temporary repo to hold documentation
+#  
+o    Billing Management Console - AWS Bill.pdf                     # anonymised example Bill
 #
-o    Billing Management Console - AWS Bill.pdf # anonymised example Bill
+o    FinOps Maturity Assessment Survey - Google Forms.pdf          # Survet Questionnaire
 #
-o    FinOps Maturity Assessment Survey - Google Forms.pdf
+o    PowerBI-Dashboard-29-10-2024.pbix                              # CUR Report with PowerBI analysis
 #
-o    PowerBI-Dashboard-29-10-2024.pbix
+o    Three-Tier-Architecture-Capture.PNG                            # Three Tier architecture
 #
-o    Three-Tier-Architecture-Capture.PNG
+o    complex-deployment-tags-experiment.yaml                         # example tagging template
 #
-o    complex-deployment-tags-experiment.yaml
+o    deploy-3tier-arch-kevin-24-10--Working-internalnetwork.yml      # Three Tier architecture template
 #
-o    deploy-3tier-arch-kevin-24-10--Working-internalnetwork.yml
-#
-o    ec2-with-apache-internal-IP
+o    ec2-with-apache-internal-IP                                    #example simple webserver example with tags
