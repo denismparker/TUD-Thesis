@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+    Default: ACME-Enterprises
+  KeyPair:
+    Description: Please enter the name of the SSH Key Pair for remote access to EC2
+      instances
+    Type: String
+    Default: temporary_key-pair
+  ProjectOwner:
+    Description: The Name of the main Project Owner
+    Type: String
+    Default: Denis Parker
+  Department:
+    Description: The name of the operating Unit responsible for the Resource
+    Type: String
+    Default: Computer Operations
+Resources:
+  BastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPair
+      ImageId: ami-00385a401487aefa4 # Replace with a current Amazon Linux 2 AMI ID in your region
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      Tags:
+        - Key: Name # A set of Tags to identify users and Stakeholders
+          Value: !Sub ${EnvironmentName}-BastionHost
+        - Key: Project-Name
+          Value: !Sub ${EnvironmentName}-BastionHost
+        - Key: Project-Owner
+          Value: !Sub ${ProjectOwner}-Owner
+        - Key: Project-Organisation
+          Value: Sales Operations
+        - Key: Contact
+          Value: "Denis Parker"
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo yum update -y
+        sudo yum install -y amazon-cloudwatch-agent
+        cat << EOF >> /tmp/cloudwatch-template.json
+        {
+        "agent": {
+              "metrics_collection_interval": 60,
+              "run_as_user": "cwagent" } ,
+        "metrics": {
+              "aggregation_dimensions": [
+                      [
+                              "InstanceId"
+                      ]
+              ],
+              "append_dimensions": {
+                      "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+                      "ImageId": "${aws:ImageId}",
+                      "InstanceId": "${aws:InstanceId}",
+                      "InstanceType": "${aws:InstanceType}"
+              },
+              "metrics_collected": {
+                      "collectd": {
+                              "metrics_aggregation_interval": 60
+                      },
+                      "disk": {
+                              "measurement": [
+                                      "used_percent"
+                              ],
+                              "metrics_collection_interval": 60,
+                              "resources": [
+                                      "*"
+                              ]
+                      },
+                      "mem": {
+                              "measurement": [
+                                      "mem_used_percent"
+                              ],
+                              "metrics_collection_interval": 60
+                      },
+                      "statsd": {
+                              "metrics_aggregation_interval": 60,
+                              "metrics_collection_interval": 10,
+                              "service_address": ":8125"
+                      }
+              },
+        "traces": {
+              "buffer_size_mb": 3,
+              "concurrency": 8,
+              "insecure": false,
+              "region_override": "eu-west-1",
+              "traces_collected": {
+                      "xray": {
+                              "bind_address": "127.0.0.1:2000",
+                              "tcp_proxy": {
+                                      "bind_address": "127.0.0.1:2000"
+                              }
+                      }
+              }
+          }
+        }
+        }
+        EOF
+        sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s
+        sudo yum install -y httpd
+        sudo systemctl start httpd
+        sudo systemctl enable httpd
+        sudo yum install -y nmap
+        TOKEN=$(curl --request PUT "http://169.254.169.254/latest/api/token" --header "X-aws-ec2-metadata-token-ttl-seconds: 3600")
+        REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region --header "X-aws-ec2-metadata-token: $TOKEN")
+        EC2AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone --header "X-aws-ec2-metadata-token: $TOKEN")
+        AMI=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/ami-id)
+        sudo echo "<html><body><h1>Hello! <p> Welcome to My Thesis Custom Web Page.<p> AMI-ID $AMI <p> REGION  $REGION  <p> AVAILABILITY ZONE $EC2AZ <p> TAGS $INSTANCETAG </h1></body></html>" > /var/www/html/index.html
+
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup # A Basic Security group to allow inbound SSH & HTTP
+    Properties:
+      GroupDescription: Enable HTTP access via port 80
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 # Ensure this is secure in production, consider restricting to specific IPs
+      Tags:
+        - Key: Name # A set of Tags to identify Owner and stakeholders
+          Value: !Sub ${EnvironmentName}-Web-Security-Group
+        - Key: Project-Name
+          Value: !Sub ${EnvironmentName}-BastionHost
+        - Key: !Sub ${EnvironmentName}-Project-Owner
+          Value: Denis Parker - 087 654321
+        - Key: !Sub ${EnvironmentName}-Project-Organisation
+          Value: Sales Operations
+        - Key: Billing-Code
+          Value: !Sub ${EnvironmentName}-${Department}
+        - Key: Contact
+          Value: "Denis Parker"
+Outputs:
+  BastionHostPIP:
+    Description: The Public IP Address of the Bastion Host
+    Value: !GetAtt BastionHost.PublicIp
