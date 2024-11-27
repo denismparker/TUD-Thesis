@@ -1,5 +1,5 @@
 # TUD-Thesis
-o    A temporary repo to hold documentation
+A temporary repo to hold documentation
 #  
 o    Billing Management Console - AWS Bill.pdf                     # anonymised example Bill
 #
